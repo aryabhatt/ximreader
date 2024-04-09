@@ -22,6 +22,11 @@ root = path.abspath(path.dirname(__file__))
 with open(path.join(root, "README.md"), encoding='utf-8') as fp:
     readme = fp.read()
 
+with open(path.join(root, 'requirements.txt')) as requirements_file:
+    # Parse requirements.txt, ignoring any commented-out lines.
+    requirements = [line for line in requirements_file.read().splitlines()
+                    if not line.startswith('#')]
+
 def get_pybind11_headers():
     import pybind11
     major, minor, _ = pybind11.version_info
@@ -48,7 +53,7 @@ setup(
     author="Dinesh Kumar",
     author_email="dkumar@lbl.gov",
     packages=[ "ximreader" ],
-    #install_requires=requirements,
+    install_requires=requirements,
     license="BSD (2-clause)",
     classifiers=[
         'Development Status :: beta',
