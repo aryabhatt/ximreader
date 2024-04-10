@@ -9,3 +9,13 @@ ximReader can installed via pip
 `` pip install git+https://github.com/aryabhatt/ximreader.git ``
 
 Alternatively, it can be installed from the source. It is recommended that a virtual environment be used for the installation.
+
+
+## Usage
+
+`` 
+from ximreader import ximReader
+
+image = ximReader(<full path to xim>)
+
+``
