@@ -2,14 +2,13 @@ import numpy as np
 from .libxim import ximreader
 
 def ximReader(ximfile):
-    """ Read xim image file.
+    """Reads an XIM image file and returns its image data as a NumPy array.
 
     Parameters:
-    ximfile (str) -- full path to xim image file
-
+    ximfile (str): The full path to the XIM image file.
 
     Returns:
-        numpy.ndarray: Image data
+    numpy.ndarray: The image data extracted from the XIM file.
     """
     header, image = ximreader(ximfile)
     nrows = header['width']
