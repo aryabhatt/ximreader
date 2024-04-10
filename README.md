@@ -13,9 +13,5 @@ Alternatively, it can be installed from the source. It is recommended that a vir
 
 ## Usage
 
-`` 
-from ximreader import ximReader
-
-image = ximReader(<full path to xim>)
-
-``
+    from ximreader import ximReader
+    image = ximReader(<full path to xim>)
