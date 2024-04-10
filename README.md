@@ -6,6 +6,6 @@ ximReader is an open-source tool for reading xim files as numpy arrays. It is ba
 
 ximReader can installed via pip
 
-`` pip install git+https://github.com/aryabhatt/ximreader/tree/master ``
+`` pip install git+https://github.com/aryabhatt/ximreader.git ``
 
 Alternatively, it can be installed from the source. It is recommended that a virtual environment be used for the installation.
