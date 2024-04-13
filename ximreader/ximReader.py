@@ -11,7 +11,7 @@ def ximReader(ximfile):
     numpy.ndarray: The image data extracted from the XIM file.
     """
     header, image = ximreader(ximfile)
-    nrows = header['width']
-    ncols = header['height']
+    ncols = header['width']
+    nrows = header['height']
     return image.reshape(nrows, ncols)
 

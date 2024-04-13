@@ -47,7 +47,7 @@ extensions.append(ext)
 
 setup(
     name='ximreader',
-    version= "1.0.0",
+    version= "1.0.1",
     description="Python Extension for reading XIM files",
     long_description=readme,
     author="Dinesh Kumar",
