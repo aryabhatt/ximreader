@@ -1,5 +1,6 @@
 from os import path
 from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 import sys
 
 
@@ -27,20 +28,38 @@ with open(path.join(root, 'requirements.txt')) as requirements_file:
     requirements = [line for line in requirements_file.read().splitlines()
                     if not line.startswith('#')]
 
-def get_pybind11_headers():
-    import pybind11
-    major, minor, _ = pybind11.version_info
-    if major < 2 or minor < 3:
-        raise Exception(
-            "ximReader requires pybind11 "
-            "{0}.{1} or higher".format(*min_pybind11_version))
-    return pybind11.get_include()
+
+class BuildExt(build_ext):
+    """A custom build extension for adding pybind11 include dirs."""
+    def build_extensions(self):
+        import pybind11
+        # Get version info - handle both tuple and Version object
+        version_info = pybind11.version_info
+        if hasattr(version_info, '__getitem__'):
+            major, minor = version_info[0], version_info[1]
+        else:
+            # Version object with major, minor attributes
+            major = getattr(version_info, 'major', 0)
+            minor = getattr(version_info, 'minor', 0)
+        
+        if (major, minor) < min_pybind11_version:
+            raise Exception(
+                "ximReader requires pybind11 "
+                "{0}.{1} or higher, found {2}.{3}".format(
+                    *min_pybind11_version, major, minor))
+        
+        # Add pybind11 include directory to all extensions
+        for ext in self.extensions:
+            ext.include_dirs.append(pybind11.get_include())
+        
+        build_ext.build_extensions(self)
+
 
 extensions = []
 ext = Extension(
     "ximreader.libxim",
     sources = ['src/ximreader.cpp'],
-    include_dirs=[get_pybind11_headers()],
+    include_dirs=[],
     extra_compile_args = ['-std=c++17']
 )
 extensions.append(ext)
@@ -53,6 +72,7 @@ setup(
     author="Dinesh Kumar",
     author_email="dkumar@lbl.gov",
     packages=[ "ximreader" ],
+    setup_requires=['pybind11>=2.3'],
     install_requires=requirements,
     license="BSD (2-clause)",
     classifiers=[
@@ -60,5 +80,6 @@ setup(
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
     ],
-    ext_modules=extensions
+    ext_modules=extensions,
+    cmdclass={'build_ext': BuildExt}
 )
