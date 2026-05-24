@@ -66,9 +66,10 @@ extensions.append(ext)
 
 setup(
     name='ximreader',
-    version= "1.0.1",
+    version= "1.0.2",
     description="Python Extension for reading XIM files",
     long_description=readme,
+    long_description_content_type='text/markdown',
     author="Dinesh Kumar",
     author_email="dkumar@lbl.gov",
     packages=[ "ximreader" ],
@@ -76,9 +77,14 @@ setup(
     install_requires=requirements,
     license="BSD (2-clause)",
     classifiers=[
-        'Development Status :: beta',
+        'Development Status :: 4 - Beta',
         'Natural Language :: English',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: OS Independent',
     ],
     ext_modules=extensions,
     cmdclass={'build_ext': BuildExt}
