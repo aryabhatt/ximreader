@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  id-token: write  # Required for trusted publishing
 
 jobs:
   build_wheels:
@@ -70,9 +69,6 @@ jobs:
     name: Publish to PyPI
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
-    environment:
-      name: pypi
-      url: https://pypi.org/p/ximreader
     
     steps:
       - name: Download all artifacts
@@ -84,3 +80,5 @@ jobs:
       
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{secrets.PYPI_API_TOKEN}}
