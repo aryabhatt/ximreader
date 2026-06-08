@@ -1,24 +1,36 @@
 [build-system]
 requires = [
     "setuptools>=61.0",
-    "pybind11"
+    "setuptools-scm>=8",
+    "pybind11>=2.6",   # >=2.6 required for Pybind11Extension(cxx_std=...)
     ]
 build-backend = "setuptools.build_meta"
 
 
 [project]
 name = "ximreader"
-version = "1.0.2"
+
 authors = [
-    {name="Dinesh Kumar", email="dkumar@lbl.gov"},
+    {name="Dinesh Kumar", email="dinesharma@gmail.com"},
     ]
 description = "Python extension for reading xim files"
 readme = "README.md"
 license = {file = "LICENSE"}
-requires-python = ">=3.8"
+# Changed from ">=3.8". cibuildwheel derives which Pythons to build from this
+# field. Revert to ">=3.8" if you still support 3.8/3.9 (both are end-of-life).
+requires-python = ">=3.10"
+# NOTE: setup.py previously read these from requirements.txt, but that value was
+# being ignored. Confirm this list matches requirements.txt and add anything missing.
 dependencies = [ "numpy" ]
+dynamic = ["version"]
 classifiers = [
+    "Development Status :: 4 - Beta",
+    "Natural Language :: English",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: BSD License",
     "Operating System :: OS Independent",
 ]
 
@@ -26,3 +38,15 @@ classifiers = [
 Homepage = "https://github.com/aryabhatt/ximreader"
 Issues = "https://github.com/aryabhatt/ximreader/issues"
 
+[tool.setuptools]
+# The C++ sources live under src/, but the importable package is the flat
+# ximreader/ directory — declare it explicitly so auto-discovery doesn't guess.
+packages = ["ximreader"]
+
+[tool.setuptools_scm]
+# An (even empty) [tool.setuptools_scm] table activates version inference.
+# Version is taken from your latest git tag: tag "v1.0.4" -> version 1.0.4.
+#
+# Optional: also write the resolved version to an importable file so you can
+# expose ximreader.__version__ at runtime:
+# version_file = "ximreader/_version.py"
