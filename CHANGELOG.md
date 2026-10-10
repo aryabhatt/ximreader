@@ -1,12 +1,13 @@
 # Changelog
 
-## [unreleased]
+## [1.2.0] - 2026-10-10
 
 - adding requirements file
 - ximReader: return header and image properties; fix uncompressed read, terminator frames
 - Add pytest suite with synthetic XIM writer; harden reader against bad input
 - Document running tests (incl. real-data tests) in README; ignore *.so
 - CI: run pytest and trigger on devel branch
+- Add git-cliff config and generated CHANGELOG.md
 
 ## [1.1.0] - 2026-07-04
 
