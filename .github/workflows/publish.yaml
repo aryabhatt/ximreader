@@ -1,0 +1,99 @@
+name: Build and Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '[0-9]*'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: read
+
+jobs:
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history + tags — required for setuptools-scm
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build sdist
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --sdist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    needs: [build_sdist]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # cibuildwheel builds every Python version itself (derived from
+        # requires-python in pyproject.toml). macos-latest is arm64; add
+        # macos-13 here if you also need Intel (x86_64) macOS wheels.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      # Build wheels FROM the sdist so the version is read from frozen sdist
+      # metadata — no git is needed inside the build container.
+      - name: Download sdist
+        uses: actions/download-artifact@v4
+        with:
+          name: sdist
+          path: dist
+
+      - name: Resolve sdist path
+        id: sdist
+        shell: bash
+        run: echo "path=$(ls dist/*.tar.gz)" >> "$GITHUB_OUTPUT"
+
+      - name: Build wheels from sdist
+        # Pin to a real minor version — cibuildwheel has no floating @v3 tag.
+        # See https://github.com/pypa/cibuildwheel/releases ; Dependabot can bump it.
+        uses: pypa/cibuildwheel@v3.2
+        with:
+          package-dir: ${{ steps.sdist.outputs.path }}
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
+  publish:
+    name: Publish to PyPI
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ximreader/
+
+    permissions:
+      id-token: write  # MANDATORY for trusted publishing (OIDC); no token used
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          pattern: '*'
+          merge-multiple: true
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

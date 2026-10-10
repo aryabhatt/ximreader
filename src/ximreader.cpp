@@ -54,33 +54,68 @@ py::tuple ximread(const char * filename) {
     // uncompresssed buffer size
     int BufferSize;
     xim.read((char *) &BufferSize, 4);
- 
-    // read first row + 1, (strored uncompressed)
-    int word;
-    for (int i = 0; i < Width; i++) {
+
+    if (CompressionFlag == 0) {
+        for (int i = 0; i < Width * Height; i++) {
+            int pixel = 0;
+            xim.read((char *) &pixel, BytesPerPixel);
+            buffer[i] = pixel;
+        }
+    } else {
+        // read first row + 1, (strored uncompressed)
+        int word;
+        for (int i = 0; i < Width; i++) {
+            xim.read((char *) &word, 4);
+            buffer[i] = word;
+        }
         xim.read((char *) &word, 4);
-        buffer[i] = word;
-    }
-    xim.read((char *) &word, 4);
-    buffer[Width] = word;
+        buffer[Width] = word;
 
-    // uncompress
-    auto compressedPixels = Width * (Height - 1) - 1;
-    auto completeBytes = compressedPixels / BytesPerPixel;
-    auto partialByte = compressedPixels % BytesPerPixel;
+        // uncompress
+        auto compressedPixels = Width * (Height - 1) - 1;
+        auto completeBytes = compressedPixels / BytesPerPixel;
+        auto partialByte = compressedPixels % BytesPerPixel;
 
-    // start uncompressing one pixel at a time
-    char chval;
-    short int shint;
-    int diff;
-    int index = Width + 1;
-    unsigned bitflags;
-    for (int i = 0; i < completeBytes; i++) {
-        bitflags = LUT[i];
-        for (int j = 0; j < 4; j++) {
+        // start uncompressing one pixel at a time
+        char chval;
+        short int shint;
+        int diff;
+        int index = Width + 1;
+        unsigned bitflags;
+        for (int i = 0; i < completeBytes; i++) {
+            bitflags = LUT[i];
+            for (int j = 0; j < 4; j++) {
 
+                unsigned mask = (bitflags >> 2) << 2;
+                unsigned val = mask ^ bitflags;
+                switch (val) {
+                    case 0:
+                        xim.read(&chval, 1);
+                        diff = static_cast<int>(chval);
+                        break;
+                    case 1:
+                        xim.read((char *) &shint, 2);
+                        diff = static_cast<int>(shint);
+                        break;
+                    case 2:
+                        xim.read((char *) &diff, 4);
+                        break;
+                    default:
+                        std::cerr << "unrecogonized LUT value" << std::endl;
+                        std::exit(1);
+                }
+
+                buffer[index] = diff + buffer[index-1] + buffer[index-Width] - buffer[index - Width - 1];
+                index += 1;
+                bitflags = bitflags >> 2;
+            }
+        }
+
+        // read the partial byte
+        bitflags = LUT[completeBytes];
+        for (int i = 0; i < partialByte; i++) {
             unsigned mask = (bitflags >> 2) << 2;
-            unsigned val = mask ^ bitflags; 
+            unsigned val = mask ^ bitflags;
             switch (val) {
                 case 0:
                     xim.read(&chval, 1);
@@ -98,38 +133,11 @@ py::tuple ximread(const char * filename) {
                     std::exit(1);
             }
 
-            buffer[index] = diff + buffer[index-1] + buffer[index-Width] - buffer[index - Width - 1];            
+            buffer[index] = diff + buffer[index-1] + buffer[index-Width] - buffer[index - Width - 1];
             index += 1;
             bitflags = bitflags >> 2;
-        } 
-    }
-
-    // read the partial byte
-    bitflags = LUT[completeBytes];
-    for (int i = 0; i < partialByte; i++) {
-        unsigned mask = (bitflags >> 2) << 2;
-        unsigned val = mask ^ bitflags; 
-        switch (val) {
-            case 0:
-                xim.read(&chval, 1);
-                diff = static_cast<int>(chval);
-                break;
-            case 1:
-                xim.read((char *) &shint, 2);
-                diff = static_cast<int>(shint);
-                break;
-            case 2:
-                xim.read((char *) &diff, 4);
-                break;
-            default:
-                std::cerr << "unrecogonized LUT value" << std::endl;
-                std::exit(1);
         }
-
-        buffer[index] = diff + buffer[index-1] + buffer[index-Width] - buffer[index - Width - 1];            
-        index += 1;
-        bitflags = bitflags >> 2;
-    } 
+    }
 
     xim.close();
     delete [] LUT;
